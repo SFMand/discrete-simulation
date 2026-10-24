@@ -3,6 +3,7 @@ package com.sfmand.des.model.singleserver;
 import com.sfmand.des.engine.Model;
 import com.sfmand.des.engine.Report;
 import com.sfmand.des.engine.Simulation;
+import com.sfmand.des.engine.TerminationCondition;
 import com.sfmand.des.random.Variate;
 
 import java.util.ArrayDeque;
@@ -25,6 +26,7 @@ public class SingleServerModel implements Model {
 
     // Statistics
     long arrivals;
+    long serviceStarts;
     long completions;
     double areaN;
     double busyTime;
@@ -61,8 +63,14 @@ public class SingleServerModel implements Model {
 
     void startService(Simulation sim, Customer customer) {
         serverBusy = true;
+        serviceStarts++;
         totalQueueDelay += sim.clock() - customer.arrivalTime();
         sim.schedule(new DepartureEvent(sim.clock() + service.next(), this, customer));
+    }
+
+    /** Stops the run as soon as the m-th customer starts service (nw = m). */
+    public TerminationCondition untilServiceStarts(long m) {
+        return sim -> serviceStarts >= m;
     }
 
     @Override
@@ -73,6 +81,10 @@ public class SingleServerModel implements Model {
     @Override
     public long completions() {
         return completions;
+    }
+
+    public long serviceStarts() {
+        return serviceStarts;
     }
 
     public int numberInSystem() {
@@ -88,9 +100,10 @@ public class SingleServerModel implements Model {
         return new Report(name())
                 .add("clock", "Final simulation clock", finalClock)
                 .add("arrivals", "Customers arrived", arrivals)
+                .add("nw", "Customers started service (nw)", serviceStarts)
                 .add("completions", "Customers completed", completions)
                 .add("sum_wq", "Sum of waiting times in queue", totalQueueDelay)
-                .add("w", "Average waiting time in queue (w)", ratio(totalQueueDelay, completions))
+                .add("w", "Average waiting time in queue (w)", ratio(totalQueueDelay, serviceStarts))
                 .add("W", "Average time in system (W)", ratio(totalSystemTime, completions))
                 .add("sa", "Sum of state areas (sa)", areaN)
                 .add("n_bar", "Time-average number in system (n_bar)", ratio(areaN, finalClock))

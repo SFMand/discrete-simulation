@@ -77,6 +77,22 @@ class SingleServerTask1Test {
     }
 
     @Test
+    void stopsWhenFourthCustomerStartsService() {
+        // Customer 3 departs at 18 and customer 4 starts service right away.
+        SingleServerModel model = task1Model();
+        Simulation sim = new Simulation(model, model.untilServiceStarts(4));
+        Report report = sim.run();
+
+        assertEquals(18, report.get("clock"), EPS);
+        assertEquals(4, report.get("nw"), EPS);
+        assertEquals(3, report.get("completions"), EPS);
+        assertEquals(3, report.get("sum_wq"), EPS);
+        assertEquals(0.75, report.get("w"), EPS);
+        assertEquals(12, report.get("sa"), EPS);
+        assertEquals(9, report.get("busy"), EPS);
+    }
+
+    @Test
     void endOfSimulationEventStopsAtFixedTime() {
         SingleServerModel model = new SingleServerModel(
                 new DeterministicSequence(8, 6, 1, 8),

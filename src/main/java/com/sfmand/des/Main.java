@@ -1,16 +1,18 @@
 package com.sfmand.des;
 
+import java.util.List;
+
 import com.sfmand.des.engine.Numbers;
 import com.sfmand.des.engine.Report;
 import com.sfmand.des.engine.Simulation;
 import com.sfmand.des.engine.TerminationCondition;
+import com.sfmand.des.model.finitepopulation.FinitePopulationAnalytical;
+import com.sfmand.des.model.finitepopulation.FinitePopulationModel;
 import com.sfmand.des.model.singleserver.SingleServerModel;
 import com.sfmand.des.model.tandem.BlockingTandemModel;
 import com.sfmand.des.model.tandem.TandemModel;
 import com.sfmand.des.random.DeterministicSequence;
 import com.sfmand.des.random.ExponentialVariate;
-
-import java.util.List;
 
 public class Main {
 
@@ -23,6 +25,8 @@ public class Main {
         switch (scenario) {
             case "task1-trace" -> task1Trace();
             case "task1-big" -> task1Big(customers);
+            case "task2-trace" -> task2Trace();
+            case "task2-big" -> task2Big();
             case "task3-trace" -> task3Trace();
             case "task3-big" -> task3Big(customers);
             case "task4-trace" -> task4Trace();
@@ -31,6 +35,8 @@ public class Main {
             case "all" -> {
                 task1Trace();
                 task1Big(customers);
+                task2Trace();
+                task2Big();
                 task3Trace();
                 task3Big(customers);
                 task4Trace();
@@ -77,6 +83,36 @@ public class Main {
                 + ", w=" + Numbers.format(systemTime - meanService, 4));
         System.out.println();
     }
+
+    static void task2Trace() {
+        Simulation.TRACE_MODE = true;
+        FinitePopulationModel model = new FinitePopulationModel(2,
+                new DeterministicSequence(1, 2, 4, 5, 6),
+                new DeterministicSequence(3, 2, 1),
+                10);
+        new Simulation(model, TerminationCondition.never()).run().print();
+        System.out.println();
+    }
+
+    static void task2Big() {
+        Simulation.TRACE_MODE = false;
+        int terminals = 5;
+        double meanThink = 20;
+        double meanService = 4;
+        FinitePopulationModel model = new FinitePopulationModel(terminals,
+                new ExponentialVariate(meanThink, 42),
+                new ExponentialVariate(meanService, 7),
+                1_000_000);
+        new Simulation(model, TerminationCondition.never()).run().print();
+
+        FinitePopulationAnalytical analytical = FinitePopulationAnalytical.of(terminals, meanThink, meanService);
+        System.out.println("  Analytical M/M/1//N: U=" + Numbers.format(analytical.u(), 4)
+                + ", n_bar=" + Numbers.format(analytical.nBar(), 4)
+                + ", W=" + Numbers.format(analytical.bigW(), 4)
+                + ", w=" + Numbers.format(analytical.w(), 4));
+        System.out.println();
+    }
+    
     static void task3Trace() {
         Simulation.TRACE_MODE = true;
         TandemModel model = new TandemModel(

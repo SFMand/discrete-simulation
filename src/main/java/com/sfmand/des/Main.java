@@ -8,6 +8,7 @@ import com.sfmand.des.engine.Simulation;
 import com.sfmand.des.engine.TerminationCondition;
 import com.sfmand.des.model.finitepopulation.FinitePopulationAnalytical;
 import com.sfmand.des.model.finitepopulation.FinitePopulationModel;
+import com.sfmand.des.model.closednetwork.ClosedNetworkModel;
 import com.sfmand.des.model.singleserver.SingleServerModel;
 import com.sfmand.des.model.tandem.BlockingTandemModel;
 import com.sfmand.des.model.tandem.TandemModel;
@@ -32,6 +33,8 @@ public class Main {
             case "task4-trace" -> task4Trace();
             case "task4-random" -> task4Random();
             case "task4-big" -> task4Big(customers);
+            case "task5-trace" -> task5Trace();
+            case "task5-big" -> task5Big(customers);
             case "all" -> {
                 task1Trace();
                 task1Big(customers);
@@ -42,6 +45,8 @@ public class Main {
                 task4Trace();
                 task4Random();
                 task4Big(customers);
+                task5Trace();
+                task5Big(customers);
             }
             default -> {
                 System.err.println("Unknown scenario: " + scenario);
@@ -166,6 +171,28 @@ public class Main {
                 new ExponentialVariate(6, 11),
                 2);
         new Simulation(model, TerminationCondition.maxEvents(40)).run().print();
+        System.out.println();
+    }
+
+    static void task5Trace() {
+        Simulation.TRACE_MODE = true;
+        ClosedNetworkModel model = new ClosedNetworkModel(2,
+                List.of(() -> 2, () -> 3, () -> 4, () -> 5),
+                new DeterministicSequence(0.1, 0.6, 0.9, 0.1, 0.6, 0.9), 12);
+        new Simulation(model, TerminationCondition.never()).run().print();
+        System.out.println();
+    }
+
+    static void task5Big(long visits) {
+        if (visits < 1) {
+            throw new IllegalArgumentException("Completed visits must be at least 1");
+        }
+        Simulation.TRACE_MODE = false;
+        ClosedNetworkModel model = new ClosedNetworkModel(10,
+                List.of(new ExponentialVariate(2, 7), new ExponentialVariate(3, 11),
+                        new ExponentialVariate(4, 13), new ExponentialVariate(5, 17)),
+                42, 1_000_000);
+        new Simulation(model, TerminationCondition.maxCompletions(visits)).run().print();
         System.out.println();
     }
 
